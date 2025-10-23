@@ -1,55 +1,27 @@
-name: Build Angular SlickGrid Only
+name: Minimal Angular Build
 
-on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
+on: [push, pull_request]
 
 jobs:
-  build-angular:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-    # Шаг 1: Получить код из репозитория
     - name: Checkout code
       uses: actions/checkout@v4
       
-    # Шаг 2: Установить Node.js 20 (обязательно!)
     - name: Setup Node.js 20
       uses: actions/setup-node@v4
       with:
         node-version: '20.17.0'
         
-    # Шаг 3: Установить pnpm
     - name: Install pnpm
       run: npm install -g pnpm
       
-    # Шаг 4: Показать версии для проверки
-    - name: Show versions
-      run: |
-        echo "Node version: $(node --version)"
-        echo "PNPM version: $(pnpm --version)"
-      
-    # Шаг 5: Установить зависимости ВСЕГО репозитория
-    - name: Install root dependencies
-      run: pnpm install
-      
-    # Шаг 6: Перейти в папку Angular и установить зависимости там
-    - name: Install Angular package dependencies
+    # Устанавливаем зависимости только для Angular пакета
+    - name: Setup and build Angular
       run: |
         cd frameworks/angular-slickgrid
         pnpm install
-      
-    # Шаг 7: Собрать Angular пакет
-    - name: Build Angular SlickGrid
-      run: |
-        cd frameworks/angular-slickgrid
         pnpm build
-        
-    # Шаг 8: Проверить результат
-    - name: Verify build
-      run: |
-        echo "✅ Angular проект успешно собран!"
-        echo "Содержимое папки dist:"
-        ls -la frameworks/angular-slickgrid/dist/
+        echo "✅ Сборка Angular завершена!"
