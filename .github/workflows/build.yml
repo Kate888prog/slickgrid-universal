@@ -1,0 +1,46 @@
+name: Build Angular SlickGrid
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Шаг 1: Получить код из репозитория
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    # Шаг 2: Установить Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    # Шаг 3: Установить pnpm
+    - name: Install pnpm
+      run: npm install -g pnpm
+      
+    # Шаг 4: Установить зависимости
+    - name: Install dependencies
+      run: pnpm install
+      
+    # Шаг 5: Собрать основные пакеты
+    - name: Build core packages
+      run: pnpm build:core
+      
+    # Шаг 6: Собрать Angular SlickGrid
+    - name: Build Angular SlickGrid
+      run: |
+        cd frameworks/angular-slickgrid
+        pnpm build
+        
+    # Шаг 7: Показать информацию о сборке
+    - name: Show build info
+      run: |
+        echo "✅ Сборка завершена успешно!"
+        echo "📦 Angular проект собран в frameworks/angular-slickgrid/dist"
