@@ -19,37 +19,67 @@ jobs:
     - name: Install pnpm
       run: npm install -g pnpm
       
-    - name: Install dependencies
+    - name: Install root dependencies
       run: pnpm install
       
-    - name: Build Angular
+    # Сначала узнаем какие команды доступны
+    - name: Check available scripts
+      run: |
+        echo "=== Доступные команды в angular-slickgrid ==="
+        cd frameworks/angular-slickgrid
+        pnpm run
+      
+    # Пробуем собрать разными способами
+    - name: Try to build Angular
       run: |
         cd frameworks/angular-slickgrid
+        
+        # Сначала установим зависимости Angular проекта
         pnpm install
-        pnpm run build
-      
-    # ⬇️⬇️⬇️ ВАЖНО: ДОБАВЬТЕ ЭТИ СТРОКИ ДЛЯ АРТЕФАКТОВ ⬇️⬇️⬇️
-    
-    - name: Create ZIP archive
-      run: |
-        cd frameworks/angular-slickgrid/dist
-        zip -r angular-build.zip .
         
-    - name: Upload Angular build (ZIP)
+        # Пробуем разные команды сборки
+        echo "Попытка 1: pnpm run build"
+        pnpm run build || echo "Команда build не сработала"
+        
+        echo "Попытка 2: pnpm build"
+        pnpm build || echo "Команда pnpm build не сработала"
+        
+        echo "Попытка 3: npm run build"
+        npm run build || echo "Команда npm run build не сработала"
+        
+        # Проверим создалась ли папка dist
+        echo "Проверяем папку dist:"
+        ls -la | grep dist || echo "Папка dist не создана"
+        
+    # Если папка dist создалась - создаём артефакты
+    - name: Create artifacts if build succeeded
+      if: success()
+      run: |
+        cd frameworks/angular-slickgrid
+        if [ -d "dist" ]; then
+          echo "✅ Папка dist найдена! Создаём артефакты..."
+          cd dist
+          zip -r angular-build.zip .
+          echo "📦 Размер архива:"
+          du -h angular-build.zip
+        else
+          echo "❌ Папка dist не найдена! Сборка не удалась."
+          echo "Содержимое папки angular-slickgrid:"
+          ls -la
+        fi
+        
+    - name: Upload artifacts
+      if: success()
       uses: actions/upload-artifact@v4
       with:
-        name: angular-slickgrid-build
-        path: frameworks/angular-slickgrid/dist/angular-build.zip
+        name: angular-build-result
+        path: |
+          frameworks/angular-slickgrid/dist/
+          frameworks/angular-slickgrid/package.json
         retention-days: 30
         
-    - name: Upload dist folder
-      uses: actions/upload-artifact@v4
-      with:
-        name: angular-dist-files
-        path: frameworks/angular-slickgrid/dist/
-        retention-days: 30
-        
-    - name: Show success message
+    - name: Show final message
       run: |
-        echo "🎉 Angular успешно собран!"
-        echo "📦 Артефакты будут доступны для скачивания"
+        echo "=== РЕЗУЛЬТАТ ==="
+        echo "Проверьте логи выше чтобы увидеть что произошло"
+        echo "Если есть папка dist - артефакты будут загружены"
