@@ -1,0 +1,89 @@
+# Создать файл с содержимым через терминал
+cat > .github/workflows/build-and-download.yml << 'EOF'
+name: 🚀 Build and Package Angular
+
+on:
+  workflow_dispatch:  # Только ручной запуск
+
+jobs:
+  build-angular:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # 1. Получить код
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    # 2. Установить Node.js
+    - name: ⚙️ Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    # 3. Установить pnpm
+    - name: 📦 Install pnpm
+      run: npm install -g pnpm
+      
+    # 4. Показать версии
+    - name: 🔍 Show versions
+      run: |
+        echo "Node: $(node --version)"
+        echo "PNPM: $(pnpm --version)"
+      
+    # 5. Установить зависимости
+    - name: 📚 Install dependencies
+      run: pnpm install
+      
+    # 6. Перейти в Angular папку и установить зависимости
+    - name: 🔧 Setup Angular
+      run: |
+        cd frameworks/angular-slickgrid
+        pnpm install
+      
+    # 7. Собрать Angular проект
+    - name: 🏗️ Build Angular
+      run: |
+        cd frameworks/angular-slickgrid
+        pnpm run build
+      
+    # 8. Создать ZIP архив с собранным проектом
+    - name: 📦 Create download package
+      run: |
+        cd frameworks/angular-slickgrid/dist
+        zip -r angular-slickgrid-build.zip .
+        echo "📊 Содержимое dist папки:"
+        ls -la
+        echo "📦 Размер ZIP архива:"
+        du -h angular-slickgrid-build.zip
+      
+    # 9. Сохранить архив для скачивания
+    - name: ⬆️ Upload build for download
+      uses: actions/upload-artifact@v4
+      with:
+        name: angular-slickgrid-compiled
+        path: frameworks/angular-slickgrid/dist/angular-slickgrid-build.zip
+        retention-days: 30
+        
+    # 10. Сохранить также папку dist
+    - name: ⬆️ Upload dist folder
+      uses: actions/upload-artifact@v4
+      with:
+        name: angular-dist-files
+        path: frameworks/angular-slickgrid/dist/
+        retention-days: 30
+        
+    # 11. Информация о завершении
+    - name: ✅ Complete
+      run: |
+        echo "🎉 СБОРКА ЗАВЕРШЕНА УСПЕШНО!"
+        echo ""
+        echo "📥 КАК СКАЧАТЬ:"
+        echo "1. Перейдите на вкладку 'Actions'"
+        echo "2. Нажмите на этот workflow '🚀 Build and Package Angular'"
+        echo "3. Прокрутите вниз до раздела 'Artifacts'"
+        echo "4. Нажмите:"
+        echo "   - 'angular-slickgrid-compiled' для скачивания ZIP архива"
+        echo "   - 'angular-dist-files' для скачивания папки с файлами"
+        echo ""
+        echo "⏰ Артефакты будут храниться 30 дней"
+EOF
