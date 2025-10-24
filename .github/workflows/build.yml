@@ -28,9 +28,9 @@ jobs:
         pnpm install
         pnpm run build
       
-    # ⬇️⬇️⬇️ ДОБАВЬТЕ ЭТИ СТРОКИ ДЛЯ СОХРАНЕНИЯ АРТЕФАКТОВ ⬇️⬇️⬇️
+    # ⬇️⬇️⬇️ ВАЖНО: ДОБАВЬТЕ ЭТИ СТРОКИ ДЛЯ АРТЕФАКТОВ ⬇️⬇️⬇️
     
-    - name: Create ZIP archive of build
+    - name: Create ZIP archive
       run: |
         cd frameworks/angular-slickgrid/dist
         zip -r angular-build.zip .
@@ -48,3 +48,8 @@ jobs:
         name: angular-dist-files
         path: frameworks/angular-slickgrid/dist/
         retention-days: 30
+        
+    - name: Show success message
+      run: |
+        echo "🎉 Angular успешно собран!"
+        echo "📦 Артефакты будут доступны для скачивания"
