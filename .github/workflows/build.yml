@@ -1,89 +1,28 @@
-name: 📦 Build Angular npm Package
+name: 📦 Download Source Code Only
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-package:
+  download-source:
     runs-on: ubuntu-latest
     
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       
-    - name: ⚙️ Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: 📦 Install pnpm
-      run: npm install -g pnpm
-      
-    - name: 📚 Install dependencies
-      run: pnpm install
-      
-    - name: 🏗️ Build Angular npm package
+    - name: 📦 Create source archive
       run: |
-        cd frameworks/angular-slickgrid
-        pnpm run build
-        echo "✅ NPM пакет создан!"
+        # Просто архивируем Angular папку
+        zip -r angular-slickgrid-source.zip \
+          frameworks/angular-slickgrid/ \
+          -x "*/node_modules/*" "*/dist/*"
+        
+        echo "📦 Исходный код: $(du -h angular-slickgrid-source.zip)"
+        echo "✅ Готово! Это чистый исходный код без сборки"
       
-    - name: 🔍 Find npm package files
-      run: |
-        cd frameworks/angular-slickgrid
-        echo "=== Найденные файлы пакета ==="
-        find . -name "*.tgz" -o -name "*.tar.gz" -o -name "package.json" | grep -v node_modules
-        
-        echo "=== Содержимое dist папки ==="
-        ls -la dist/ || echo "Нет dist папки"
-        
-        echo "=== Создаём npm пакет вручную ==="
-        npm pack ./dist/ 2>/dev/null || echo "Попытка npm pack не удалась"
-        
-        echo "=== Файлы после npm pack ==="
-        ls -la *.tgz *.tar.gz 2>/dev/null || echo "Нет tgz файлов"
-      
-    - name: 📦 Create downloadable package
-      run: |
-        cd frameworks/angular-slickgrid
-        
-        # Создаём архив с ВСЕМИ файлами пакета
-        zip -r angular-npm-package.zip . -x "node_modules/*" ".*"
-        
-        # Также пытаемся найти и добавить .tgz файлы
-        find . -name "*.tgz" -o -name "*.tar.gz" | head -5 | while read file; do
-          echo "Найден пакет: $file"
-          cp "$file" ./
-        done
-        
-        echo "📦 Созданные файлы:"
-        ls -la *.zip *.tgz *.tar.gz 2>/dev/null || echo "Нет архивов"
-      
-    - name: ⬆️ Upload npm package
+    - name: ⬆️ Upload source
       uses: actions/upload-artifact@v4
       with:
-        name: angular-slickgrid-npm-package
-        path: |
-          frameworks/angular-slickgrid/angular-npm-package.zip
-          frameworks/angular-slickgrid/*.tgz
-          frameworks/angular-slickgrid/*.tar.gz
-        retention-days: 30
-        
-    - name: 📋 Package info
-      run: |
-        cd frameworks/angular-slickgrid
-        echo "🎉 NPM ПАКЕТ СОЗДАН!"
-        echo ""
-        echo "📦 Что в архиве:"
-        echo "  - angular-npm-package.zip - ПОЛНЫЙ исходный код"
-        echo "  - *.tgz - Готовый npm пакет (если создался)"
-        echo ""
-        echo "🚀 Как использовать в других проектах:"
-        echo "  1. Скачайте архив"
-        echo "  2. Если есть .tgz файл: npm install ./angular-slickgrid-*.tgz"
-        echo "  3. Или скопируйте src/ в ваш проект"
-        echo ""
-        echo "📁 Структура пакета:"
-        echo "  dist/ - Скомпилированные файлы библиотеки"
-        echo "  src/  - Исходный код компонентов"
-        echo "  *.json - Конфигурационные файлы"
+        name: angular-slickgrid-source-code
+        path: angular-slickgrid-source.zip
