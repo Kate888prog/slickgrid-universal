@@ -1,33 +1,69 @@
-name: 📥 Download Angular Folder
+name: 🎯 Build Angular Demo
 
 on:
   workflow_dispatch:
 
 jobs:
-  download:
+  build-demo:
     runs-on: ubuntu-latest
     
     steps:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       
-    - name: 📦 Create Angular folder archive
+    - name: ⚙️ Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: 📦 Install pnpm
+      run: npm install -g pnpm
+      
+    - name: 📚 Install dependencies
+      run: pnpm install
+      
+    - name: 🏗️ Build Angular DEMO
       run: |
-        echo "Создаём архив папки angular-slickgrid..."
         cd frameworks/angular-slickgrid
-        zip -r angular-slickgrid-folder.zip .
-        echo "✅ Архив создан!"
+        pnpm run build:demo
+        echo "✅ Демо-приложение собрано!"
+      
+    - name: 🔍 Find demo files
+      run: |
+        echo "Ищем собранные файлы демо..."
+        find frameworks/angular-slickgrid -name "index.html" -o -name "*.js" | grep -v node_modules
+        
+        echo "Содержимое папки angular-slickgrid:"
+        ls -la frameworks/angular-slickgrid/
+        
+        # Демо скорее всего в dist/angular-slickgrid/browser/ или подобной папке
+        if [ -d "frameworks/angular-slickgrid/dist" ]; then
+          echo "Содержимое dist:"
+          ls -la frameworks/angular-slickgrid/dist/
+          find frameworks/angular-slickgrid/dist -type f -name "*.html" -o -name "*.js" | head -10
+        fi
+      
+    - name: 📦 Package demo for download
+      run: |
+        # Создаём архив из ВСЕЙ папки angular-slickgrid (включая собранное демо)
+        cd frameworks/angular-slickgrid
+        zip -r angular-demo-complete.zip .
+        echo "📦 Архив создан!"
         ls -la *.zip
-        echo "📊 Размер: $(du -h angular-slickgrid-folder.zip)"
+        du -h *.zip
       
     - name: ⬆️ Upload for download
       uses: actions/upload-artifact@v4
       with:
-        name: angular-slickgrid-folder
-        path: frameworks/angular-slickgrid/angular-slickgrid-folder.zip
+        name: angular-slickgrid-with-demo
+        path: frameworks/angular-slickgrid/angular-demo-complete.zip
         retention-days: 30
         
-    - name: ✅ Done
+    - name: 🎉 Success
       run: |
         echo "🎉 ВСЁ ГОТОВО!"
-        echo "📥 Скачайте 'angular-slickgrid-folder' - это папка angular-slickgrid"
+        echo "📥 Скачайте 'angular-slickgrid-with-demo'"
+        echo "В архиве:"
+        echo "  - Исходный код Angular библиотеки"
+        echo "  - Собранное демо-приложение (в dist/)"
+        echo "  - Все конфигурационные файлы"
