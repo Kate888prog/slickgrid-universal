@@ -1,98 +1,32 @@
-name: Build Angular SlickGrid
+name: Simple Angular Download
 
 on:
   workflow_dispatch:
 
 jobs:
-  build:
+  download:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: Install pnpm
-      run: npm install -g pnpm
-      
-    - name: Install root dependencies
-      run: pnpm install
-      
-    - name: Build Angular and find dist
+    - name: Create downloadable package
       run: |
-        echo "=== Текущая папка ==="
-        pwd
-        
-        echo "=== Собираем Angular ==="
+        # Просто архивируем папку angular-slickgrid
         cd frameworks/angular-slickgrid
-        pnpm install
-        pnpm run build
-        
-        echo "=== Ищем папку dist ==="
-        find . -name "dist" -type d
-        echo "=== Содержимое текущей папки ==="
-        ls -la
-        echo "=== Если есть dist - её содержимое ==="
-        if [ -d "dist" ]; then
-          ls -la dist/
-        else
-          echo "❌ Папка dist не найдена в angular-slickgrid!"
-          echo "=== Ищем во всём проекте ==="
-          cd ../..
-          find . -name "dist" -type d
-        fi
-        
-    - name: Create artifacts from correct location
-      run: |
-        echo "=== Создаём артефакты ==="
-        
-        # Проверим разные возможные расположения dist
-        if [ -d "frameworks/angular-slickgrid/dist" ]; then
-          echo "✅ Нашли dist в frameworks/angular-slickgrid/dist"
-          cd frameworks/angular-slickgrid/dist
-          ls -la
-          zip -r angular-build.zip .
-          echo "📦 ZIP создан"
-        elif [ -d "dist" ]; then
-          echo "✅ Нашли dist в корне"
-          cd dist
-          ls -la
-          zip -r angular-build.zip .
-          echo "📦 ZIP создан"
-        else
-          echo "❌ Папка dist не найдена!"
-          # Создадим пустой файл чтобы workflow не упал
-          echo "empty" > dummy.txt
-          zip angular-build.zip dummy.txt
-        fi
-        
-    - name: Upload artifacts
+        zip -r angular-slickgrid-source.zip .
+        echo "✅ Архив создан!"
+        ls -la *.zip
+      
+    - name: Upload for download
       uses: actions/upload-artifact@v4
       with:
-        name: angular-slickgrid-build
-        path: |
-          angular-build.zip
-          frameworks/angular-slickgrid/dist/
+        name: angular-slickgrid-source-code
+        path: frameworks/angular-slickgrid/angular-slickgrid-source.zip
         retention-days: 30
         
-    - name: Final check
+    - name: Done
       run: |
-        echo "=== РЕЗУЛЬТАТ ==="
-        if [ -f "angular-build.zip" ]; then
-          echo "✅ ZIP архив создан:"
-          du -h angular-build.zip
-        else
-          echo "❌ ZIP архив не создан"
-        fi
-        
-        if [ -d "frameworks/angular-slickgrid/dist" ]; then
-          echo "✅ Папка dist найдена"
-          echo "📁 Размер:"
-          du -sh frameworks/angular-slickgrid/dist/
-        else
-          echo "❌ Папка dist не найдена"
-        fi
+        echo "🎉 ГОТОВО!"
+        echo "Скачайте 'angular-slickgrid-source-code' - это исходный код Angular библиотеки"
