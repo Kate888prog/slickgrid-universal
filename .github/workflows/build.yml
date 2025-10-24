@@ -1,10 +1,10 @@
-name: 🎯 Build Angular Demo
+name: 📦 Build Angular npm Package
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-demo:
+  build-package:
     runs-on: ubuntu-latest
     
     steps:
@@ -22,48 +22,68 @@ jobs:
     - name: 📚 Install dependencies
       run: pnpm install
       
-    - name: 🏗️ Build Angular DEMO
+    - name: 🏗️ Build Angular npm package
       run: |
         cd frameworks/angular-slickgrid
-        pnpm run build:demo
-        echo "✅ Демо-приложение собрано!"
+        pnpm run build
+        echo "✅ NPM пакет создан!"
       
-    - name: 🔍 Find demo files
+    - name: 🔍 Find npm package files
       run: |
-        echo "Ищем собранные файлы демо..."
-        find frameworks/angular-slickgrid -name "index.html" -o -name "*.js" | grep -v node_modules
-        
-        echo "Содержимое папки angular-slickgrid:"
-        ls -la frameworks/angular-slickgrid/
-        
-        # Демо скорее всего в dist/angular-slickgrid/browser/ или подобной папке
-        if [ -d "frameworks/angular-slickgrid/dist" ]; then
-          echo "Содержимое dist:"
-          ls -la frameworks/angular-slickgrid/dist/
-          find frameworks/angular-slickgrid/dist -type f -name "*.html" -o -name "*.js" | head -10
-        fi
-      
-    - name: 📦 Package demo for download
-      run: |
-        # Создаём архив из ВСЕЙ папки angular-slickgrid (включая собранное демо)
         cd frameworks/angular-slickgrid
-        zip -r angular-demo-complete.zip .
-        echo "📦 Архив создан!"
-        ls -la *.zip
-        du -h *.zip
+        echo "=== Найденные файлы пакета ==="
+        find . -name "*.tgz" -o -name "*.tar.gz" -o -name "package.json" | grep -v node_modules
+        
+        echo "=== Содержимое dist папки ==="
+        ls -la dist/ || echo "Нет dist папки"
+        
+        echo "=== Создаём npm пакет вручную ==="
+        npm pack ./dist/ 2>/dev/null || echo "Попытка npm pack не удалась"
+        
+        echo "=== Файлы после npm pack ==="
+        ls -la *.tgz *.tar.gz 2>/dev/null || echo "Нет tgz файлов"
       
-    - name: ⬆️ Upload for download
+    - name: 📦 Create downloadable package
+      run: |
+        cd frameworks/angular-slickgrid
+        
+        # Создаём архив с ВСЕМИ файлами пакета
+        zip -r angular-npm-package.zip . -x "node_modules/*" ".*"
+        
+        # Также пытаемся найти и добавить .tgz файлы
+        find . -name "*.tgz" -o -name "*.tar.gz" | head -5 | while read file; do
+          echo "Найден пакет: $file"
+          cp "$file" ./
+        done
+        
+        echo "📦 Созданные файлы:"
+        ls -la *.zip *.tgz *.tar.gz 2>/dev/null || echo "Нет архивов"
+      
+    - name: ⬆️ Upload npm package
       uses: actions/upload-artifact@v4
       with:
-        name: angular-slickgrid-with-demo
-        path: frameworks/angular-slickgrid/angular-demo-complete.zip
+        name: angular-slickgrid-npm-package
+        path: |
+          frameworks/angular-slickgrid/angular-npm-package.zip
+          frameworks/angular-slickgrid/*.tgz
+          frameworks/angular-slickgrid/*.tar.gz
         retention-days: 30
         
-    - name: 🎉 Success
+    - name: 📋 Package info
       run: |
-        echo "🎉 ВСЁ ГОТОВО!"
-        echo "📥 Скачайте 'angular-slickgrid-with-demo'"
-        echo "В архиве:"
-        echo "  - Исходный код Angular библиотеки"
-        echo "  - Собранное демо-приложение (в dist/)"
-        echo "  - Все конфигурационные файлы"
+        cd frameworks/angular-slickgrid
+        echo "🎉 NPM ПАКЕТ СОЗДАН!"
+        echo ""
+        echo "📦 Что в архиве:"
+        echo "  - angular-npm-package.zip - ПОЛНЫЙ исходный код"
+        echo "  - *.tgz - Готовый npm пакет (если создался)"
+        echo ""
+        echo "🚀 Как использовать в других проектах:"
+        echo "  1. Скачайте архив"
+        echo "  2. Если есть .tgz файл: npm install ./angular-slickgrid-*.tgz"
+        echo "  3. Или скопируйте src/ в ваш проект"
+        echo ""
+        echo "📁 Структура пакета:"
+        echo "  dist/ - Скомпилированные файлы библиотеки"
+        echo "  src/  - Исходный код компонентов"
+        echo "  *.json - Конфигурационные файлы"
