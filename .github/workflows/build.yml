@@ -1,6 +1,7 @@
-name: Minimal Angular Build
+name: Build Angular SlickGrid
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -10,18 +11,40 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js 20
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20.17.0'
+        node-version: '20'
         
     - name: Install pnpm
       run: npm install -g pnpm
       
-    # Устанавливаем зависимости только для Angular пакета
-    - name: Setup and build Angular
+    - name: Install dependencies
+      run: pnpm install
+      
+    - name: Build Angular
       run: |
         cd frameworks/angular-slickgrid
         pnpm install
-        pnpm build
-        echo "✅ Сборка Angular завершена!"
+        pnpm run build
+      
+    # ⬇️⬇️⬇️ ДОБАВЬТЕ ЭТИ СТРОКИ ДЛЯ СОХРАНЕНИЯ АРТЕФАКТОВ ⬇️⬇️⬇️
+    
+    - name: Create ZIP archive of build
+      run: |
+        cd frameworks/angular-slickgrid/dist
+        zip -r angular-build.zip .
+        
+    - name: Upload Angular build (ZIP)
+      uses: actions/upload-artifact@v4
+      with:
+        name: angular-slickgrid-build
+        path: frameworks/angular-slickgrid/dist/angular-build.zip
+        retention-days: 30
+        
+    - name: Upload dist folder
+      uses: actions/upload-artifact@v4
+      with:
+        name: angular-dist-files
+        path: frameworks/angular-slickgrid/dist/
+        retention-days: 30
