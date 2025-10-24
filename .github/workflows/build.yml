@@ -1,32 +1,53 @@
-name: Simple Angular Download
+name: Build Angular SlickGrid
 
 on:
   workflow_dispatch:
 
 jobs:
-  download:
+  build-source:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Create downloadable package
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Install pnpm
+      run: npm install -g pnpm
+      
+    - name: Install dependencies
+      run: pnpm install
+      
+    - name: Build Angular library
       run: |
-        # Просто архивируем папку angular-slickgrid
+        cd frameworks/angular-slickgrid
+        pnpm install
+        pnpm run build
+        echo "✅ Angular библиотека собрана!"
+      
+    - name: Create source code archive
+      run: |
+        # Создаём архив всего Angular проекта
         cd frameworks/angular-slickgrid
         zip -r angular-slickgrid-source.zip .
-        echo "✅ Архив создан!"
+        echo "📦 Архив создан:"
         ls -la *.zip
+        du -h *.zip
       
-    - name: Upload for download
+    - name: Upload source code
       uses: actions/upload-artifact@v4
       with:
-        name: angular-slickgrid-source-code
+        name: angular-slickgrid-complete-source
         path: frameworks/angular-slickgrid/angular-slickgrid-source.zip
         retention-days: 30
         
-    - name: Done
+    - name: Success message
       run: |
         echo "🎉 ГОТОВО!"
-        echo "Скачайте 'angular-slickgrid-source-code' - это исходный код Angular библиотеки"
+        echo "📥 Скачайте 'angular-slickgrid-complete-source'"
+        echo "Это ПОЛНЫЙ исходный код Angular библиотеки"
+        echo "Можете использовать его в своих проектах!"
